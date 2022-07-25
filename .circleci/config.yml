@@ -1,6 +1,13 @@
 version: 2.1
 
 commands:
+  notify_on_failure:
+    steps:
+      - slack/notify:
+          event: fail
+          channel: monitoring-notifications
+          template: basic_fail_1
+
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -36,145 +43,14 @@ orbs:
   slack: circleci/slack@4.10.1
 
 jobs:
-  send-notification:
-      description: Send custom notification to slack when a job fails and succeeds.
-      docker:
-        - image: 'cimg/base:stable'
-      steps:
-        - slack/notify:
-            custom: |
-              {
-                "text": "CircleCI job Notification.",
-                "blocks": [
-                  {
-                    "type": "header",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "Job Failed. :red_circle:",
-                      "emoji": true
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Job*: ${CIRCLE_JOB}"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Project*: $CIRCLE_PROJECT_REPONAME"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Branch*: $CIRCLE_BRANCH"
-                      }
-                    ],
-                    "accessory": {
-                      "type": "image",
-                      "image_url": "https://user-images.githubusercontent.com/15726413/180857560-c34a31c8-e1d3-49ab-896d-b7be5f4ac843.png",
-                      "alt_text": "Udacity People logo"
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Mentions*: $SLACK_PARAM_MENTIONS"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "actions",
-                    "elements": [
-                      {
-                        "type": "button",
-                        "text": {
-                          "type": "plain_text",
-                          "text": "View Job"
-                        },
-                        "url": "${CIRCLE_BUILD_URL}"
-                      }
-                    ]
-                  }
-                ]
-              }
-            event: fail
-            channel: monitoring-notifications
-            mentions: "@goodnesschrisugari"
-        - slack/notify:
-            event: pass
-            channel: monitoring-notifications
-            mentions: "@goodnesschrisugari"
-            custom: |
-              {
-                "text": "CircleCI job Notification.",
-                "blocks": [
-                  {
-                    "type": "header",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "Job Succeeded. :white_check_mark:",
-                      "emoji": true
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Job*: ${CIRCLE_JOB}"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Project*: $CIRCLE_PROJECT_REPONAME"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Branch*: $CIRCLE_BRANCH"
-                      }
-                    ],
-                    "accessory": {
-                      "type": "image",
-                      "image_url": "https://user-images.githubusercontent.com/15726413/180857560-c34a31c8-e1d3-49ab-896d-b7be5f4ac843.png",
-                      "alt_text": "Udacity People logo"
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Mentions*: $SLACK_PARAM_MENTIONS"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "actions",
-                    "elements": [
-                      {
-                        "type": "button",
-                        "text": {
-                          "type": "plain_text",
-                          "text": "View Job"
-                        },
-                        "url": "${CIRCLE_BUILD_URL}"
-                      }
-                    ]
-                  }
-                ]
-              }
+  notify_on_success:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - slack/notify:
+          event: pass
+          channel: monitoring-notifications
+          template: success_tagged_deployment_1
 
   build-frontend:
     docker:
