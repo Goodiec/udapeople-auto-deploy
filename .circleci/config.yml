@@ -32,7 +32,148 @@ commands:
               exit 1
             fi
 
+orbs:
+  slack: circleci/slack@4.10.1
+
 jobs:
+  send-notification:
+      description: Send custom notification to slack when a job fails and succeeds.
+      docker:
+        - image: 'cimg/base:stable'
+      steps:
+        - slack/notify:
+            custom: |
+              {
+                "text": "CircleCI job Notification.",
+                "blocks": [
+                  {
+                    "type": "header",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "Job Failed. :red_circle:",
+                      "emoji": true
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Job*: ${CIRCLE_JOB}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch*: $CIRCLE_BRANCH"
+                      }
+                    ],
+                    "accessory": {
+                      "type": "image",
+                      "image_url": "https://user-images.githubusercontent.com/15726413/180857560-c34a31c8-e1d3-49ab-896d-b7be5f4ac843.png",
+                      "alt_text": "Udacity People logo"
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Mentions*: $SLACK_PARAM_MENTIONS"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "actions",
+                    "elements": [
+                      {
+                        "type": "button",
+                        "text": {
+                          "type": "plain_text",
+                          "text": "View Job"
+                        },
+                        "url": "${CIRCLE_BUILD_URL}"
+                      }
+                    ]
+                  }
+                ]
+              }
+            event: fail
+            mentions: "@goodnesschrisugari"
+        - slack/notify:
+            event: pass
+            mentions: "@goodnesschrisugari"
+            custom: |
+              {
+                "text": "CircleCI job Notification.",
+                "blocks": [
+                  {
+                    "type": "header",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "Job Succeeded. :white_check_mark:",
+                      "emoji": true
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Job*: ${CIRCLE_JOB}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch*: $CIRCLE_BRANCH"
+                      }
+                    ],
+                    "accessory": {
+                      "type": "image",
+                      "image_url": "https://user-images.githubusercontent.com/15726413/180857560-c34a31c8-e1d3-49ab-896d-b7be5f4ac843.png",
+                      "alt_text": "Udacity People logo"
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Mentions*: $SLACK_PARAM_MENTIONS"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "actions",
+                    "elements": [
+                      {
+                        "type": "button",
+                        "text": {
+                          "type": "plain_text",
+                          "text": "View Job"
+                        },
+                        "url": "${CIRCLE_BUILD_URL}"
+                      }
+                    ]
+                  }
+                ]
+              }
+
   build-frontend:
     docker:
       - image: circleci/node:13.8.0
