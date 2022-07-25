@@ -1,11 +1,14 @@
 version: 2.1
 
+orbs:
+  slack: circleci/slack@4.10.1
+
 commands:
-  notify_on_failure:
+  failure_notification:
     steps:
       - slack/notify:
           event: fail
-          channel: monitoring-notifications
+          channel: C03QV1VAM2P
           template: basic_fail_1
 
   destroy-environment:
@@ -39,17 +42,14 @@ commands:
               exit 1
             fi
 
-orbs:
-  slack: circleci/slack@4.10.1
-
 jobs:
-  notify_on_success:
+  success_notifications:
     docker:
       - image: cimg/base:stable
     steps:
       - slack/notify:
           event: pass
-          channel: monitoring-notifications
+          channel: C03QV1VAM2P
           template: success_tagged_deployment_1
 
   build-frontend:
