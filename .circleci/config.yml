@@ -106,9 +106,11 @@ jobs:
                 ]
               }
             event: fail
+            channel: monitoring-notifications
             mentions: "@goodnesschrisugari"
         - slack/notify:
             event: pass
+            channel: monitoring-notifications
             mentions: "@goodnesschrisugari"
             custom: |
               {
