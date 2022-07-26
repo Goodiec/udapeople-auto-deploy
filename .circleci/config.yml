@@ -1,16 +1,6 @@
 version: 2.1
 
-orbs:
-  slack: circleci/slack@4.10.1
-
 commands:
-  failure_notification:
-    steps:
-      - slack/notify:
-          event: fail
-          channel: C03QV1VAM2P
-          template: basic_fail_1
-
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -42,15 +32,147 @@ commands:
               exit 1
             fi
 
+orbs:
+  slack: circleci/slack@4.10.1
+
 jobs:
-  success_notifications:
-    docker:
-      - image: cimg/base:stable
-    steps:
-      - slack/notify:
-          event: pass
-          channel: C03QV1VAM2P
-          template: success_tagged_deployment_1
+  send-notification:
+      description: Send custom notification to slack when a job fails and succeeds.
+      docker:
+        - image: 'cimg/base:stable'
+      steps:
+        - slack/notify:
+            custom: |
+              {
+                "text": "CircleCI job Notification.",
+                "blocks": [
+                  {
+                    "type": "header",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "Job Failed. :red_circle:",
+                      "emoji": true
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Job*: ${CIRCLE_JOB}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch*: $CIRCLE_BRANCH"
+                      }
+                    ],
+                    "accessory": {
+                      "type": "image",
+                      "image_url": "https://user-images.githubusercontent.com/15726413/180857560-c34a31c8-e1d3-49ab-896d-b7be5f4ac843.png",
+                      "alt_text": "Udacity People logo"
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Mentions*: @goodnesschrisugari"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "actions",
+                    "elements": [
+                      {
+                        "type": "button",
+                        "text": {
+                          "type": "plain_text",
+                          "text": "View Job"
+                        },
+                        "url": "${CIRCLE_BUILD_URL}"
+                      }
+                    ]
+                  }
+                ]
+              }
+            event: fail
+            channel: $SLACK_DEFAULT_CHANNEL
+        - slack/notify:
+            event: pass
+            channel: $SLACK_DEFAULT_CHANNEL
+            custom: |
+              {
+                "text": "CircleCI job Notification.",
+                "blocks": [
+                  {
+                    "type": "header",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "Job Succeeded. :white_check_mark:",
+                      "emoji": true
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Job*: ${CIRCLE_JOB}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Branch*: $CIRCLE_BRANCH"
+                      }
+                    ],
+                    "accessory": {
+                      "type": "image",
+                      "image_url": "https://user-images.githubusercontent.com/15726413/180857560-c34a31c8-e1d3-49ab-896d-b7be5f4ac843.png",
+                      "alt_text": "Udacity People logo"
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Mentions*: @goodnesschrisugari"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "actions",
+                    "elements": [
+                      {
+                        "type": "button",
+                        "text": {
+                          "type": "plain_text",
+                          "text": "View Job"
+                        },
+                        "url": "${CIRCLE_BUILD_URL}"
+                      }
+                    ]
+                  }
+                ]
+              }
 
   build-frontend:
     docker:
@@ -68,7 +190,6 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
-      - notify_on_failure
 
   build-backend:
     docker:
@@ -87,7 +208,6 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
-      - notify_on_failure
 
   test-frontend:
     docker:
@@ -102,7 +222,6 @@ jobs:
             cd frontend
             npm install
             npm run test
-      - notify_on_failure
 
   test-backend:
     docker:
@@ -117,7 +236,6 @@ jobs:
             cd backend
             npm install
             npm run test
-      - notify_on_failure
 
   scan-frontend:
     docker:
@@ -133,7 +251,6 @@ jobs:
             npm install
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
-      - notify_on_failure
 
   scan-backend:
     docker:
@@ -148,8 +265,8 @@ jobs:
             cd backend
             npm install
             npm audit fix --audit-level=critical --force
+            npm audit fix --force
             npm audit --audit-level=critical
-      - notify_on_failure
 
 workflows:
   default:
