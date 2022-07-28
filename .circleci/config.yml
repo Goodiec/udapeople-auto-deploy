@@ -37,144 +37,6 @@ commands:
             fi
 
 jobs:
-  send-notification:
-      description: Send custom notification to slack when a job fails and succeeds.
-      docker:
-        - image: 'cimg/base:stable'
-      steps:
-        - slack/notify:
-            custom: |
-              {
-                "text": "CircleCI job Notification.",
-                "blocks": [
-                  {
-                    "type": "header",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "Job Failed. :red_circle:",
-                      "emoji": true
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Job*: ${CIRCLE_JOB}"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Project*: $CIRCLE_PROJECT_REPONAME"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Branch*: $CIRCLE_BRANCH"
-                      }
-                    ],
-                    "accessory": {
-                      "type": "image",
-                      "image_url": "https://user-images.githubusercontent.com/15726413/180857560-c34a31c8-e1d3-49ab-896d-b7be5f4ac843.png",
-                      "alt_text": "Udacity People logo"
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Mentions*: @goodnesschrisugari"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "actions",
-                    "elements": [
-                      {
-                        "type": "button",
-                        "text": {
-                          "type": "plain_text",
-                          "text": "View Job"
-                        },
-                        "url": "${CIRCLE_BUILD_URL}"
-                      }
-                    ]
-                  }
-                ]
-              }
-            event: fail
-            channel: $SLACK_DEFAULT_CHANNEL
-        - slack/notify:
-            event: pass
-            channel: $SLACK_DEFAULT_CHANNEL
-            custom: |
-              {
-                "text": "CircleCI job Notification.",
-                "blocks": [
-                  {
-                    "type": "header",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "Job Succeeded. :white_check_mark:",
-                      "emoji": true
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Job*: ${CIRCLE_JOB}"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Project*: $CIRCLE_PROJECT_REPONAME"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Branch*: $CIRCLE_BRANCH"
-                      }
-                    ],
-                    "accessory": {
-                      "type": "image",
-                      "image_url": "https://user-images.githubusercontent.com/15726413/180857560-c34a31c8-e1d3-49ab-896d-b7be5f4ac843.png",
-                      "alt_text": "Udacity People logo"
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Mentions*: @goodnesschrisugari"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "actions",
-                    "elements": [
-                      {
-                        "type": "button",
-                        "text": {
-                          "type": "plain_text",
-                          "text": "View Job"
-                        },
-                        "url": "${CIRCLE_BUILD_URL}"
-                      }
-                    ]
-                  }
-                ]
-              }
-
   build-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -412,16 +274,18 @@ jobs:
           name: Deploy backend
           command: |
             cd backend
-            npm i
+            npm install
             npm run build
             cd ..
             tar -C backend -czvf artifact.tar.gz .
+            tree -afC /root/project/.circleci -I *node_modules*
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
             mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
-            echo "Contents  of the inventory.txt file is -------"
+            echo "Contents  of the inventory.txt file is ------- $(tail -1 inventory.txt)"
             cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml
+            ansible-playbook -i inventory.txt deploy-backend.yml \
+            --ssh-common-args='-o StrictHostKeyChecking=no'
       - destroy-environment
       - revert-migrations
 
