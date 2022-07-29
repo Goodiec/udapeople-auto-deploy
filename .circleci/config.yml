@@ -295,18 +295,13 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints:  ["d3:dd:e0:d3:bf:0f:71:3e:b3:20:40:b1:c4:07:71:04"]
+          fingerprints: ["d3:dd:e0:d3:bf:0f:71:3e:b3:20:40:b1:c4:07:71:04"]
       - attach_workspace:
-          at: .
-      - run:
-          name: View content of inventory.txt
-          command: cat .circleci/ansible/inventory.txt
+          at: ~/
       - run:
           name: Install dependencies
           command: |
-            apk add --update ansible curl rsync openssh nodejs npm
-            pip install awscli
-            aws --version
+            apk add --update --no-cache tar gzip nodejs npm aws-cli curl ansible
       - run:
           name: Deploy backend
           command: |
@@ -315,10 +310,12 @@ jobs:
             npm run build
             cd ..
             tar -C backend -czvf artifact.tar.gz .
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml -vv
+            ansible-playbook -i inventory.txt deploy-backend.yml
       - destroy_environments:
           frontend: "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
           backend: "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
