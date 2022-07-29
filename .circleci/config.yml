@@ -140,7 +140,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: instal tar gzip
+          name: install tar gzip
           command: |
             yum -y install tar gzip
       - run:
@@ -327,19 +327,19 @@ jobs:
       - run:
           name: Run backend smoke test
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:project,Values=udapeople" \
-              --output text)
-            export API_URL="http://${BACKEND_IP}:3030"
-            echo "API_URL = ${API_URL}"
-            sleep 3m
-            if curl "${API_URL}/api/status" | grep -i "ok"
-            then
-              return 0
-            else
-              return 1
-            fi
+            command: |
+              export BACKEND_IP=$(aws ec2 describe-instances \
+                --query 'Reservations[*].Instances[*].PublicIpAddress' \
+                --filters "Name=tag:project,Values=udapeople" \
+                --output text)
+              export API_URL="http://${BACKEND_IP}:3030"
+              echo "API_URL = ${API_URL}"
+              if curl "${API_URL}/api/status" | grep "ok"
+              then
+                  return 0
+              else
+                  return 1
+              fi
       - run:
           name: Run frontend smoke test.
           command: |
