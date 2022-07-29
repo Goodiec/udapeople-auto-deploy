@@ -1,42 +1,39 @@
 ---
-- name: Install Dependencies
-  become: true
-  apt:
-    name: ["nodejs", "npm"]
-    state: latest
-    update_cache: yes
+  - name: 'upgrade packages'
+    become: yes
+    apt:
+      upgrade: 'yes'
 
-- name: Install pm2
-  become: true
-  npm:
-    name: pm2
-    global: yes
-    production: yes
-    state: present
+  - name: 'update apt packages'
+    become: yes
+    apt:
+      update_cache: yes
 
-- name: Creates Directory
-  file:
-    path: /home/ubuntu/backend
-    state: directory
+  - name: 'install dependencies'
+    become: yes
+    apt:
+      name: ['nodejs', 'npm']
+      state: latest
+      update_cache: yes
 
-- name: Copy backend dist files web server
-  copy:
-    src: /root/project/artifact.tar.gz
-    dest: /home/ubuntu/backend/artifact.tar.gz
+  - name: install pm2
+    become: yes
+    npm:
+      name: pm2
+      global: yes
+      state: latest
+      production: yes
 
-- name: Uncompress Backend
-  shell: |
-    cd /home/ubuntu/backend
-    tar xvzf artifact.tar.gz -C .
-    ls -la
-- name: Build
-  become: true
-  shell: |
-    cd /home/ubuntu/backend
-    npm install
-    npm run build
+  - name: 'Unarchive backend files'
+    become: yes
+    unarchive:
+      src: files/artifact.tar.gz
+      dest: .
 
-- name: Start PM2
-  shell: |
-    cd /home/ubuntu/backend
-    pm2 start npm --name backend -- start
+  - name: start app
+    become: yes
+    shell: |
+      npm run migrations
+      pm2 stop default
+      export $(grep TYPEORM_HOST /home/ubuntu/.env)
+      pm2 start npm -- start
