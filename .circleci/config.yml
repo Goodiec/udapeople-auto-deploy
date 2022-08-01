@@ -191,7 +191,7 @@ jobs:
       - add_ssh_keys:
           fingerprints:  ["d3:dd:e0:d3:bf:0f:71:3e:b3:20:40:b1:c4:07:71:04"]
       - attach_workspace:
-          at: .
+          at: ./
       - run:
           name: View content of inventory.txt
           command: cat .circleci/ansible/inventory.txt
